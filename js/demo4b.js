@@ -18,7 +18,7 @@ $(function() {
 function loadProperties() {
     $.ajax({
         type : 'GET',
-        url : 'properties.json'
+        url : 'data/properties.json'
     }).done(function(data) {
         if (data) {
             $.each(data, function(index, value) {
@@ -42,12 +42,12 @@ function addMarker(data) {
     });
 
     infoWindow.addListener('closeclick', function() {
-        infoWindow = null;
+        currentInfoWindow = null;
     });
 
     marker = new google.maps.Marker({
         position : location,
-        map : this.map
+        map : map
     });
 
     google.maps.event.addListener(marker, 'click', function() {

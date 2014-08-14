@@ -1,4 +1,4 @@
-var map, cartoDBConnection;
+var map, currentInfoWindow, cartoDBConnection;
 
 $(function() {
     var defaultMapOptions = {
@@ -23,17 +23,27 @@ function loadProperties(sql, css) {
         type : 'cartodb',
         sublayers : [ {
             sql : sql,
-            cartocss : css
+            cartocss : css,
+            interactivity: 'cartodb_id, propaddr, parcelno'
         } ]
     }, {
         https : true
     }).addTo(map)
-      .on('done', function() {
-        // Perform post-done actions
-      })
-      .on('error', function() {
-        this.alert('Map Error', 'There was a fatal error loading the map.');
-      });
+        .on('done', function(layer) {
+            // Perform post-done actions
+            var subLayer = layer.getSubLayer(0);
+            subLayer.setInteraction(true); // <--- exposes layer data
+            cdb.vis.Vis.addCursorInteraction(map, subLayer);
+            subLayer.on('featureClick', function(e, latlng, pos, data, layerIndex) {
+                closeCurrentInfoWindow();
+
+                var markerInfo = addMarker(latlng, data);
+                showInfoWindow(markerInfo.marker, markerInfo.infoWindow);
+            });
+        })
+        .on('error', function() {
+            this.alert('Map Error', 'There was a fatal error loading the map.');
+        });
 }
 
 function updateExtent(sql) {
@@ -43,4 +53,46 @@ function updateExtent(sql) {
         google_bounds.extend(new google.maps.LatLng(bounds[1][0], bounds[1][1]));
         map.fitBounds(google_bounds);
     });
+}
+
+
+// ---------------------------------------
+
+function addMarker(latlng, data) {
+    var marker, location, infoWindow;
+
+    location = new google.maps.LatLng(
+        parseFloat(latlng[0]),
+        parseFloat(latlng[1]));
+
+    infoWindow = new google.maps.InfoWindow({
+        content : Mustache.render(base.property_infowindow_template, data)
+    });
+
+    infoWindow.addListener('closeclick', function() {
+        currentInfoWindow = null;
+    });
+
+    marker = new google.maps.Marker({
+        position : location,
+        map : map,
+        visible : false // <-- dont show a marker since we already have one on the cartodb layer
+    });
+
+    return {
+        marker : marker,
+        infoWindow : infoWindow
+    }
+}
+
+function showInfoWindow(marker, infoWindow) {
+    infoWindow.open(map, marker);
+    currentInfoWindow = infoWindow;
+}
+
+function closeCurrentInfoWindow() {
+    if (currentInfoWindow) {
+        currentInfoWindow.close();
+        currentInfoWindow = null;
+    }
 }

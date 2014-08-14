@@ -20,6 +20,6 @@ function addMarker(latitude, longitude) {
 
     marker = new google.maps.Marker({
         position : location,
-        map : this.map
+        map : map
     });
 }

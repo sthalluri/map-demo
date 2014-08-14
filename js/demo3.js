@@ -31,12 +31,12 @@ function addMarker(latitude, longitude) {
     });
 
     infoWindow.addListener('closeclick', function() {
-        infoWindow = null;
+        currentInfoWindow = null;
     });
 
     marker = new google.maps.Marker({
         position : location,
-        map : this.map
+        map : map
     });
 
     google.maps.event.addListener(marker, 'click', function() {
