@@ -11,3 +11,11 @@ html, body, #map {
 #radius_menu span {
     font-weight: bold;
 }
+
+#layer_menu {
+    top: 6px !important;
+}
+
+#layer_menu span {
+    font-weight: bold;
+}

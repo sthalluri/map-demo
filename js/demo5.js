@@ -1,4 +1,4 @@
-var map, currentInfoWindow, cartoDBConnection;
+var map, cartodbLayer, currentInfoWindow, cartoDBConnection, futureUserLayer;
 
 $(function() {
     var defaultMapOptions = {
@@ -7,6 +7,12 @@ $(function() {
     };
 
     map = new google.maps.Map(document.getElementById('map'), defaultMapOptions);
+
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push($('#layer_menu')[0]);
+
+    $('#layer_menu input[type=checkbox]').change(function(){
+        ($(this).is(':checked')) ? addFutureUseLayer() : removeFutureUseLayer();
+    });
 
     cartoDBConnection = new cartodb.SQL({
         user: base.cartodb_user,
@@ -31,13 +37,14 @@ function loadProperties(sql, css) {
     }).addTo(map)
         .on('done', function(layer) {
             // Perform post-done actions
+            cartodbLayer = layer;
             var subLayer = layer.getSubLayer(0);
             subLayer.setInteraction(true); // <--- exposes layer data
             cdb.vis.Vis.addCursorInteraction(map, subLayer);
             subLayer.on('featureClick', function(e, latlng, pos, data, layerIndex) {
                 closeCurrentInfoWindow();
 
-                var markerInfo = addMarker(latlng, data);
+                var markerInfo = addMarker(latlng, data, base.property_infowindow_template);
                 showInfoWindow(markerInfo.marker, markerInfo.infoWindow);
             });
         })
@@ -57,8 +64,10 @@ function updateExtent(sql) {
 
 
 // ---------------------------------------
+// Marker functions
+// ---------------------------------------
 
-function addMarker(latlng, data) {
+function addMarker(latlng, data, template) {
     var marker, location, infoWindow;
 
     location = new google.maps.LatLng(
@@ -66,7 +75,7 @@ function addMarker(latlng, data) {
         parseFloat(latlng[1]));
 
     infoWindow = new google.maps.InfoWindow({
-        content : Mustache.render(base.property_infowindow_template, data)
+        content : Mustache.render(template, data)
     });
 
     infoWindow.addListener('closeclick', function() {
@@ -94,5 +103,35 @@ function closeCurrentInfoWindow() {
     if (currentInfoWindow) {
         currentInfoWindow.close();
         currentInfoWindow = null;
+    }
+}
+
+// ---------------------------------------
+// Add another layer to the map
+// ---------------------------------------
+function addFutureUseLayer() {
+    removeFutureUseLayer();
+
+    futureUserLayer = cartodbLayer.createSubLayer( {
+        sql : base.cartodb_future_use_sql,
+        cartocss : base.cartodb_future_use_css,
+        interactivity: 'cartodb_id, mpdescription'
+    });
+
+    futureUserLayer.setInteraction(true); // <--- exposes layer data
+    cdb.vis.Vis.addCursorInteraction(map, futureUserLayer);
+    futureUserLayer.on('featureClick', function(e, latlng, pos, data, layerIndex) {
+        closeCurrentInfoWindow();
+
+        var markerInfo = addMarker(latlng, data, '<div class="infoWindow">{{mpdescription}}</div>');
+        showInfoWindow(markerInfo.marker, markerInfo.infoWindow);
+    });
+}
+
+function removeFutureUseLayer() {
+    if (futureUserLayer) {
+        closeCurrentInfoWindow();
+        futureUserLayer.remove();
+        futureUserLayer = null;
     }
 }
