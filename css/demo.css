@@ -7,3 +7,7 @@ html, body, #map {
 .infoWindow {
     width: 250px;
 }
+
+#radius_menu span {
+    font-weight: bold;
+}
