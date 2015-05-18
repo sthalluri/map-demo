@@ -14,6 +14,7 @@ $(function() {
         ($(this).is(':checked')) ? addFutureUseLayer() : removeFutureUseLayer();
     });
 
+
     cartoDBConnection = new cartodb.SQL({
         user: base.cartodb_user,
         https: true

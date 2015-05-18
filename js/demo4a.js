@@ -18,6 +18,7 @@ function loadProperties() {
     }).done(function(data) {
         if (data) {
             $.each(data, function(index, value) {
+                console.log(value);
                 addMarker(value);
             });
         }

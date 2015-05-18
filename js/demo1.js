@@ -1,6 +1,6 @@
 $(function() {
     var defaultMapOptions = {
-        zoom: 20, // Street Level Zoom
+        zoom: 10, // Street Level Zoom
         center: new google.maps.LatLng(base.default_latitude, base.default_longitude) // Solution Street Office
     };
 
